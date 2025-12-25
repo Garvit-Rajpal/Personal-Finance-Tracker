@@ -1,0 +1,41 @@
+POST
+
+/users - Garvit
+
+Register new user
+
+POST
+
+/transactions -Ravi
+
+Add income/expense
+
+GET
+
+/transactions -Garvit
+
+Fetch all transactions
+
+GET
+
+/transactions/:id - Ravi
+
+View single transaction
+
+PATCH
+
+/transactions/:id -Ravi
+
+Update transaction
+
+DELETE
+
+/transactions/:id -Garvit
+
+Delete transaction
+
+GET
+
+/summary -Ravi
+
+Fetch income-expense summary
