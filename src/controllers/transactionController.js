@@ -52,6 +52,19 @@ exports.updateTransaction = async (req, res, next) => {
   }
 };
 
+exports.deleteTransaction = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await transactionService.deleteTransaction(id);
+    res.status(200).json({
+      success: true,
+      message: 'Transaction deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.getSummary = async (req, res, next) => {
   try {
     const summary = await transactionService.getSummary();

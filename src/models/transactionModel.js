@@ -1,76 +1,65 @@
-const fs = require('fs').promises;
-const path = require('path');
-const { NotFoundError } = require('../utils/errorClasses');
-const config = require('../config');
+const mongoose = require('mongoose');
 
-const DB_PATH = path.join(__dirname, '../../', config.TRANSACTIONS_DB_PATH);
-
-const readTransactions = async () => {
-    try {
-        const data = await fs.readFile(DB_PATH, 'utf-8');
-        return JSON.parse(data);
-    } catch (error) {
-        if (error.code === 'ENOENT') {
-            return [];
-        }
-        throw error;
+const transactionSchema = new mongoose.Schema({
+    type: {
+        type: String,
+        required: [true, 'Type is required'],
+        enum: ['income', 'expense']
+    },
+    category: {
+        type: String,
+        required: [true, 'Category is required'],
+        trim: true
+    },
+    amount: {
+        type: Number,
+        required: [true, 'Amount is required'],
+        min: [0, 'Amount must be positive']
+    },
+    date: {
+        type: Date,
+        required: [true, 'Date is required']
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date
     }
+});
+
+
+transactionSchema.statics.findAll = function() {
+    return this.find();
 };
 
-const writeTransactions = async (transactions) => {
-    await fs.writeFile(DB_PATH, JSON.stringify(transactions, null, 2), 'utf-8');
+transactionSchema.statics.findById = function(id) {
+    return this.findOne({ _id: id });
 };
 
-const findAll = async () => {
-    return await readTransactions();
+transactionSchema.statics.create = function(transactionData) {
+    const transaction = new this(transactionData);
+    return transaction.save();
 };
 
-const findById = async (id) => {
-    const transactions = await readTransactions();
-    const transaction = transactions.find(t => t.id === id);
-    
-    if (!transaction) {
-        throw new NotFoundError(`Transaction with id ${id} not found`);
-    }
-    
-    return transaction;
+transactionSchema.statics.updateById = function(id, updates) {
+    return this.findOneAndUpdate(
+        { _id: id },
+        { ...updates, updatedAt: Date.now() },
+        { new: true }
+    );
 };
 
-const create = async (transactionData) => {
-    const transactions = await readTransactions();
-    
-    const newTransaction = {
-        id: Date.now().toString(),
-        ...transactionData,
-        createdAt: new Date().toISOString()
-    };
-    
-    transactions.push(newTransaction);
-    await writeTransactions(transactions);
-    
-    return newTransaction;
+transactionSchema.statics.deleteById = function(id) {
+    return this.findOneAndDelete({ _id: id });
 };
 
-const updateById = async (id, updates) => {
-    const transactions = await readTransactions();
-    const index = transactions.findIndex(t => t.id === id);
-    
-    if (index === -1) {
-        throw new NotFoundError(`Transaction with id ${id} not found`);
-    }
-    
-    const updatedTransaction = {
-        ...transactions[index],
-        ...updates,
-        id: transactions[index].id,
-        createdAt: transactions[index].createdAt,
-        updatedAt: new Date().toISOString()
-    };
-    
-    transactions[index] = updatedTransaction;
-    await writeTransactions(transactions);
-    
-    return updatedTransaction;
+// For summary calculation
+transactionSchema.statics.readTransactions = function() {
+    return this.find();
 };
 
-module.exports = { findAll, findById, create, updateById, readTransactions };
+const Transaction = mongoose.model('Transaction', transactionSchema);
+
+module.exports = Transaction;

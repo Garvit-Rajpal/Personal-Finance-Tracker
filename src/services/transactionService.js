@@ -1,11 +1,16 @@
 const transactionModel = require('../models/transactionModel');
+const { NotFoundError } = require('../utils/errorClasses');
 
 const getAllTransactions = async () => {
     return await transactionModel.findAll();
 };
 
 const getTransactionById = async (id) => {
-    return await transactionModel.findById(id);
+    const transaction = await transactionModel.findById(id);
+    if (!transaction) {
+        throw new NotFoundError(`Transaction with id ${id} not found`);
+    }
+    return transaction;
 };
 
 const createTransaction = async (transactionData) => {
@@ -13,7 +18,19 @@ const createTransaction = async (transactionData) => {
 };
 
 const updateTransaction = async (id, updates) => {
-    return await transactionModel.updateById(id, updates);
+    const transaction = await transactionModel.updateById(id, updates);
+    if (!transaction) {
+        throw new NotFoundError(`Transaction with id ${id} not found`);
+    }
+    return transaction;
+};
+
+const deleteTransaction = async (id) => {
+    const transaction = await transactionModel.deleteById(id);
+    if (!transaction) {
+        throw new NotFoundError(`Transaction with id ${id} not found`);
+    }
+    return transaction;
 };
 
 const getSummary = async () => {
@@ -49,5 +66,6 @@ module.exports = {
     getTransactionById,
     createTransaction,
     updateTransaction,
+    deleteTransaction,
     getSummary
 };

@@ -36,18 +36,34 @@ Fetches comprehensive income-expense summary
 
 ---
 
+## ✅ User & Authentication (Garvit's Tasks + Bonus)
+
+### 1. **POST /api/users**
+Registers a new user with email, password, and name.
+- Validates required fields
+- Checks for duplicate emails
+- Returns 201 Created status
+
+### 2. **POST /api/users/login** (Mock JWT)
+Authenticates user and returns a mock JWT token.
+- Validates credentials
+- Returns user info and a mock token for session management
+
+---
+
 ## 🏗️ Architecture Implemented
 
 ### Technology Stack
 - **Framework**: Express.js
 - **Language**: Node.js (CommonJS)
-- **File I/O**: fs/promises (async/non-blocking)
+- **Database**: MongoDB (via Mongoose)
+- **Containerization**: Docker & Docker Compose
 - **Config**: dotenv for environment variables
-- **Storage**: JSON file-based persistence
+- **Auth**: Mock JWT-based session management
 
 ### MVC Structure
 ```
-Routes → Controllers → Services → Models (DB)
+Routes → Controllers → Services → Models (MongoDB)
    ↓         ↓            ↓
 (Endpoints) (Handlers)  (Logic)    (Persistence)
 ```
@@ -55,23 +71,34 @@ Routes → Controllers → Services → Models (DB)
 ### Middleware Stack
 1. **Logger** - Logs all requests with timestamps
 2. **Express JSON** - Parses JSON payloads
-3. **Validator** - Validates transaction inputs
-4. **Async Handler** - Catches async errors
-5. **Error Handler** - Global error management
+3. **Auth Middleware** - Validates mock JWT tokens
+4. **Validator** - Validates transaction inputs
+5. **Async Handler** - Catches async errors
+6. **Error Handler** - Global error management
 
 ---
 
 ## 📋 Key Features Delivered
 
-### ✅ Async/Await & Non-blocking I/O
-- All file operations use `fs/promises`
-- Controllers and services use async/await
-- Proper error handling with try/catch
+### ✅ MongoDB Persistence
+- Migrated from file-based storage to MongoDB
+- Mongoose schemas for Transactions and Users
+- Persistent data volumes in Docker
 
-### ✅ Error Handling
+### ✅ Dockerization
+- Multi-container setup with Docker Compose
+- Isolated environments for App and Database
+- Easy deployment and scaling
+
+### ✅ Authentication (Mock JWT)
+- User registration and login
+- Mock JWT token generation (Base64)
+- Protected routes via Auth Middleware
+
+### ✅ Async/Await & Error Handling
+- All database operations use async/await
 - Custom error classes: `AppError`, `ValidationError`, `NotFoundError`
 - Global error middleware with consistent format
-- Proper HTTP status codes (400, 404, 500, 201, 200)
 
 ### ✅ Input Validation
 - Type: "income" or "expense" only
@@ -79,10 +106,6 @@ Routes → Controllers → Services → Models (DB)
 - Date: valid ISO format
 - Category: non-empty string
 - All validations return 400 Bad Request
-
-### ✅ Data Persistence
-- File-based storage with `fs/promises`
-- Automatic file creation
 - Atomic write operations
 - JSON format for easy inspection
 
@@ -98,13 +121,14 @@ Routes → Controllers → Services → Models (DB)
 
 ### New Files Created
 ```
+Dockerfile                        # Docker image configuration
+docker-compose.yml                # Multi-container orchestration
 .env                              # Environment variables
 src/config/index.js              # Configuration module
-src/index.js                     # Server entry point
+src/index.js                     # Server entry point (MongoDB connection)
+src/middleware/authMiddleware.js # Mock JWT validation
 src/utils/errorClasses.js        # Custom error classes
 src/middleware/asyncHandler.js   # Async error wrapper
-tests/transaction.test.js        # Service unit tests
-tests/endpoints.test.js          # API endpoint tests
 API_DOCUMENTATION.md             # Complete API reference
 IMPLEMENTATION.md                # Implementation details
 QUICKSTART.md                    # Quick start guide
@@ -113,72 +137,76 @@ CHECKLIST.md                     # Completion checklist
 
 ### Files Modified
 ```
-package.json                     # Added dependencies & scripts
-src/app.js                       # Added health route & middleware
-src/middleware/errorHandler.js   # Enhanced error handling
-src/middleware/validator.js      # Added transaction validation
-src/models/transactionModel.js   # Implemented fs/promises CRUD
-src/services/transactionService.js # Complete business logic
-src/controllers/transactionController.js # All handlers
-src/routes/transactionRoutes.js  # Ravi's endpoints setup
+package.json                     # Added mongoose & docker scripts
+src/app.js                       # Added auth routes & middleware
+src/models/transactionModel.js   # Migrated to Mongoose Schema
+src/models/userModel.js          # Migrated to Mongoose Schema
+src/services/transactionService.js # MongoDB business logic
+src/services/userService.js      # User & Auth logic
+src/controllers/transactionController.js # Updated for MongoDB
+src/controllers/userController.js # Registration & Login handlers
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Docker)
 
+The easiest way to run the project is using Docker:
+
+```bash
+# Build and start all services (App + MongoDB)
+docker-compose up --build
+
+# Run in background
+docker-compose up -d
+
+# Stop services
+docker-compose down
+```
+
+### Local Development (Requires MongoDB)
 ```bash
 # Install dependencies
 npm install
 
 # Start server
-npm start                    # Production mode
-npm run dev                 # Development with auto-reload
-
-# Test the API
-curl http://localhost:3000/health
-curl http://localhost:3000/api/summary
+npm run dev
 ```
-
----
-
-## 📚 Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [API_DOCUMENTATION.md](API_DOCUMENTATION.md) | Full API reference with examples |
-| [QUICKSTART.md](QUICKSTART.md) | Quick commands to get started |
-| [IMPLEMENTATION.md](IMPLEMENTATION.md) | Detailed implementation info |
-| [CHECKLIST.md](CHECKLIST.md) | Complete task checklist |
 
 ---
 
 ## 🧪 Testing
 
-### Example cURL Commands
+### 1. Health Check
+```bash
+curl http://localhost:3000/health
+```
 
-**Create Income:**
+### 2. Register User
+```bash
+curl -X POST http://localhost:3000/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Ravi", "email": "ravi@example.com", "password": "password123"}'
+```
+
+### 3. Login (Get Token)
+```bash
+curl -X POST http://localhost:3000/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "ravi@example.com", "password": "password123"}'
+```
+
+### 4. Create Transaction (Requires Token)
 ```bash
 curl -X POST http://localhost:3000/api/transactions \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -d '{
     "type": "income",
     "category": "Salary",
     "amount": 5000,
     "date": "2025-01-15"
   }'
-```
-
-**Get Summary:**
-```bash
-curl http://localhost:3000/api/summary
-```
-
-**Update Transaction:**
-```bash
-curl -X PATCH http://localhost:3000/api/transactions/ID_HERE \
-  -H "Content-Type: application/json" \
-  -d '{"amount": 5500}'
 ```
 
 ---
