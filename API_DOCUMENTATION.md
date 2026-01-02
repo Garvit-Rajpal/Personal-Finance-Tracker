@@ -58,9 +58,9 @@ Response:
 }
 ```
 
-## User Endpoints (Garvit's Assignments & Mock JWT)
+## User Endpoints (Authentication & Mock JWT)
 
-### 1. POST /api/users - Register New User
+### 1. POST /api/users/register - Register New User
 
 **Description:** Register a new user in the system.
 
@@ -122,7 +122,7 @@ curl -X POST http://localhost:3000/api/users/login \
 
 ---
 
-## API Endpoints (Ravi's Assignments)
+## API Endpoints (Transaction Management)
 
 ### 1. POST /api/transactions - Add Income/Expense
 
