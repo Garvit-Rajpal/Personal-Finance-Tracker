@@ -1,0 +1,29 @@
+services:
+  app:
+    build: .
+    ports:
+      - "6000:6000"
+    environment:
+      - NODE_ENV=production
+      - PORT=6000
+      - MONGODB_URI=mongodb://mongodb:27017/finance_tracker
+    depends_on:
+      - mongodb
+    networks:
+      - finance-network
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - finance-network
+
+networks:
+  finance-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
