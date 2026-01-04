@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    savingTarget:{
+        type: Number,
+        default: 0,
+        min: [0, 'Saving target must be positive']
     }
 });
 
