@@ -6,14 +6,12 @@ A professional, production-ready RESTful API for managing personal finance trans
 
 ## 🚀 Key Features
 
-- **Full CRUD for Transactions**: Create, read, update, and delete income/expense records.
-- **Financial Summaries**: Real-time calculation of total income, total expenses, and net balance.
-- **User Authentication**: Secure user registration and login with mock JWT-based session management.
-- **Data Persistence**: High-performance data storage using MongoDB and Mongoose.
-- **Containerized Environment**: Fully Dockerized setup for consistent development and deployment.
-- **Robust Error Handling**: Centralized global error management with custom error classes.
-- **Input Validation**: Strict validation for all incoming data to ensure data integrity.
-- **Request Logging**: Detailed logging of all API requests with timestamps.
+- **Auth-protected CRUD**: All transaction and budget routes are protected via JWT auth.
+- **Budgets per category**: Set and update budgets (monthly/yearly) per user/category.
+- **Financial summaries**: Per-user income/expense breakdown with net balance.
+- **Analytics**: Savings-target progress and budget vs. spend by category.
+- **User authentication**: Registration, login, and savings-target updates.
+- **MongoDB + Mongoose** persistence, Dockerized runtime, centralized error handling, validation, and logging.
 
 ---
 
@@ -66,24 +64,33 @@ The API will be accessible at `http://localhost:3000`.
 
 ---
 
-## 🛣️ API Endpoints
+## 🛣️ API Endpoints (all JSON)
 
-### Transaction Management
+### Transactions (auth required)
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/transactions` | Create a new transaction (income/expense) |
-| `GET` | `/api/transactions` | Retrieve all transactions |
-| `GET` | `/api/transactions/:id` | Get details of a specific transaction |
-| `PATCH` | `/api/transactions/:id` | Update specific fields of a transaction |
-| `DELETE` | `/api/transactions/:id` | Remove a transaction |
-| `GET` | `/api/summary` | Get financial summary (Total Income, Expense, Balance) |
+| `POST` | `/api/transactions` | Create income/expense |
+| `GET` | `/api/transactions` | List user’s transactions |
+| `GET` | `/api/transactions/summary` | Per-user income/expense summary |
+| `GET` | `/api/transactions/:id` | Fetch a single transaction by id |
+| `PATCH` | `/api/transactions/:id` | Update a transaction |
+| `DELETE` | `/api/transactions/:id` | Delete a transaction |
 
-### User & Authentication
+### Budgets (auth required)
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/users/register` | Register a new user account |
-| `POST` | `/api/users/login` | Authenticate user and receive a mock JWT token |
-| `GET` | `/api/users` | List all registered users (for testing) |
+| `GET` | `/api/budgets` | List budgets for the user |
+| `POST` | `/api/budgets` | Create a budget (category, amount, period) |
+| `PATCH` | `/api/budgets/:id` | Update a budget |
+
+### Users & Analytics
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/users` | Register user |
+| `POST` | `/api/users/login` | Login and receive JWT |
+| `GET` | `/api/users` | List users (testing/admin) |
+| `PATCH` | `/api/users/savings` | Set/update savingTarget (auth) |
+| `GET` | `/api/users/analytics` | Savings progress + budget-vs-spend (auth) |
 
 ---
 
@@ -130,9 +137,28 @@ curl -X POST http://localhost:3000/api/transactions \
   }'
 ```
 
-### 5. Get Financial Summary
+### 5. Get Financial Summary (Protected)
 ```bash
-curl http://localhost:3000/api/summary
+curl http://localhost:3000/api/transactions/summary \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+### 6. Set a Budget (Protected)
+```bash
+curl -X POST http://localhost:3000/api/budgets \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{
+    "category": "Food",
+    "amount": 300,
+    "period": "monthly"
+  }'
+```
+
+### 7. Get Analytics (Protected)
+```bash
+curl http://localhost:3000/api/users/analytics \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
 ---
@@ -163,16 +189,19 @@ The application uses the following environment variables (configured in `.env`):
 NODE_ENV=development
 PORT=3000
 MONGODB_URI=mongodb://mongodb:27017/finance_tracker
+JWT_SECRET=replace-me
+SALT_ROUND=10
 ```
 
 ---
 
 ## ✅ Implementation Status
-- [x] RESTful API Endpoints
+- [x] RESTful API Endpoints (transactions, budgets, analytics)
 - [x] MongoDB Integration
 - [x] Dockerization
-- [x] Mock JWT Authentication
+- [x] JWT Authentication for protected routes
 - [x] Global Error Handling
 - [x] Input Validation
 - [x] Request Logging
+- [x] Unit tests for controllers with mocked services
 

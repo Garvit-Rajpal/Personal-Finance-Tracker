@@ -58,12 +58,11 @@ Response:
 }
 ```
 
-## User Endpoints (Authentication & Mock JWT)
+## User Endpoints (Authentication & JWT)
 
-### 1. POST /api/users/register - Register New User
+> All protected endpoints require `Authorization: Bearer <token>`
 
-**Description:** Register a new user in the system.
-
+### 1. POST /api/users — Register New User
 **Request:**
 ```bash
 curl -X POST http://localhost:3000/api/users \
@@ -74,8 +73,7 @@ curl -X POST http://localhost:3000/api/users \
     "password": "password123"
   }'
 ```
-
-**Success Response (201):**
+**Success (201):**
 ```json
 {
   "success": true,
@@ -83,17 +81,13 @@ curl -X POST http://localhost:3000/api/users \
   "data": {
     "id": "1234567890",
     "email": "john@example.com",
-    "name": "John Doe"
+    "name": "John Doe",
+    "savingTarget": 0
   }
 }
 ```
 
----
-
-### 2. POST /api/users/login - User Login (Mock JWT)
-
-**Description:** Authenticate user and receive a mock JWT token.
-
+### 2. POST /api/users/login — Login
 **Request:**
 ```bash
 curl -X POST http://localhost:3000/api/users/login \
@@ -103,26 +97,34 @@ curl -X POST http://localhost:3000/api/users/login \
     "password": "password123"
   }'
 ```
-
-**Success Response (200):**
+**Success (200):**
 ```json
 {
   "success": true,
   "message": "Login successful",
   "data": {
-    "user": {
-      "id": "1234567890",
-      "email": "john@example.com",
-      "name": "John Doe"
-    },
-    "token": "mock-jwt-token-am9obkBleGFtcGxlLmNvbQ==.1735555555555"
+    "token": "<jwt>"
   }
 }
 ```
 
----
+### 3. PATCH /api/users/savings — Update Saving Target (auth)
+**Request:**
+```bash
+curl -X PATCH http://localhost:3000/api/users/savings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <jwt>" \
+  -d '{ "savingTarget": 1500 }
+```
+**Success (200):** returns updated user fields.
 
-## API Endpoints (Transaction Management)
+### 4. GET /api/users/analytics — User Analytics (auth)
+Returns income/expense summary, savings-target progress, and budget-vs-spend per category.
+
+### 5. GET /api/users — List Users (admin/testing)
+Unprotected list for dev/testing.
+
+## API Endpoints (Transactions — auth required)
 
 ### 1. POST /api/transactions - Add Income/Expense
 
@@ -179,37 +181,13 @@ curl -X POST http://localhost:3000/api/transactions \
 - `date` must be a valid ISO date
 - `category` must be a non-empty string
 
----
-
-### 2. GET /api/transactions - View All Transactions
-
-**Description:** Retrieve all transactions in the system
-
-**Request:**
-```bash
-curl http://localhost:3000/api/transactions
+  -H "Authorization: Bearer <jwt>"
 ```
 
-**Success Response (200):**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "1234567890",
-      "type": "expense",
-      "category": "Groceries",
-      "amount": 150.50,
-      "date": "2025-01-15",
-      "createdAt": "2025-01-30T10:30:00.000Z"
-    }
-  ]
-}
-```
+### 2. GET /api/transactions - View All Transactions (auth)
+Lists transactions for the authenticated user.
 
----
-
-### 3. GET /api/transactions/:id - View Single Transaction
+### 3. GET /api/transactions/:id - View Single Transaction (auth)
 
 **Description:** Retrieve a specific transaction by ID
 
@@ -247,9 +225,7 @@ curl http://localhost:3000/api/transactions/1234567890
 }
 ```
 
----
-
-### 4. PATCH /api/transactions/:id - Update Transaction
+### 4. PATCH /api/transactions/:id - Update Transaction (auth)
 
 **Description:** Update specific fields of a transaction
 
@@ -302,9 +278,7 @@ curl -X PATCH http://localhost:3000/api/transactions/1234567890 \
 }
 ```
 
----
-
-### 5. DELETE /api/transactions/:id - Delete Transaction
+### 5. DELETE /api/transactions/:id - Delete Transaction (auth)
 
 **Description:** Remove a transaction from the system
 
@@ -335,67 +309,28 @@ curl -X DELETE http://localhost:3000/api/transactions/1234567890
 }
 ```
 
+### 6. GET /api/transactions/summary - Income/Expense Summary (auth)
+Returns totals and per-type breakdown for the authenticated user.
+
 ---
 
-### 6. GET /api/summary - Fetch Income-Expense Summary
+## Budget Endpoints (auth required)
 
-**Description:** Get a comprehensive summary of all transactions with total income, expense, and net balance. Also available at `GET /api/transactions/summary`.
+### 1. GET /api/budgets — List budgets
+Returns all budgets for the authenticated user.
 
-**Request:**
-```bash
-curl http://localhost:3000/api/summary
-```
-
-**Success Response (200):**
+### 2. POST /api/budgets — Create budget
+Body:
 ```json
 {
-  "success": true,
-  "data": {
-    "totalIncome": 5000.00,
-    "totalExpense": 1450.50,
-    "netBalance": 3549.50,
-    "transactions": {
-      "income": [
-        {
-          "id": "1001",
-          "type": "income",
-          "category": "Salary",
-          "amount": 5000.00,
-          "date": "2025-01-15",
-          "createdAt": "2025-01-30T10:30:00.000Z"
-        }
-      ],
-      "expense": [
-        {
-          "id": "1002",
-          "type": "expense",
-          "category": "Groceries",
-          "amount": 150.50,
-          "date": "2025-01-15",
-          "createdAt": "2025-01-30T10:30:00.000Z"
-        },
-        {
-          "id": "1003",
-          "type": "expense",
-          "category": "Utilities",
-          "amount": 1300.00,
-          "date": "2025-01-20",
-          "createdAt": "2025-01-30T10:35:00.000Z"
-        }
-      ]
-    }
-  }
+  "category": "Food",
+  "amount": 300,
+  "period": "monthly" // or "yearly"
 }
 ```
 
-**Summary Fields:**
-- `totalIncome`: Sum of all income transactions
-- `totalExpense`: Sum of all expense transactions
-- `netBalance`: totalIncome - totalExpense
-- `transactions.income`: Array of all income transactions
-- `transactions.expense`: Array of all expense transactions
-
----
+### 3. PATCH /api/budgets/:id — Update budget
+Update amount, category, or period for an existing budget.
 
 ## Project Architecture
 
@@ -469,9 +404,11 @@ src/
 npm test
 ```
 
-### Test Files
-- `tests/transaction.test.js` - Unit tests for transaction service
-- `tests/endpoints.test.js` - API endpoint documentation and manual testing guide
+### Test Files (unit, mocked services/DB)
+- `tests/transactionRoutes.unit.test.js`
+- `tests/budgetRoutes.unit.test.js`
+- `tests/userRoutes.unit.test.js`
+- `tests/endpoints.test.js` (manual guide/examples)
 
 ### Manual Testing Examples
 
@@ -499,21 +436,38 @@ curl -X POST http://localhost:3000/api/transactions \
   }'
 ```
 
-**3. Get all transactions (view the JSON file directly):**
+**3. Get all transactions (auth required):**
 ```bash
-cat src/data/transactions.json
+curl http://localhost:3000/api/transactions \
+  -H "Authorization: Bearer <jwt>"
 ```
 
-**4. Get summary:**
+**4. Get summary (auth required):**
 ```bash
-curl http://localhost:3000/api/summary
+curl http://localhost:3000/api/transactions/summary \
+  -H "Authorization: Bearer <jwt>"
 ```
 
-**5. Update a transaction (replace ID with actual ID from response):**
+**5. Update a transaction (auth required):**
 ```bash
 curl -X PATCH http://localhost:3000/api/transactions/1234567890 \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <jwt>" \
   -d '{"amount": 200}'
+```
+
+**6. Set a budget (auth required):**
+```bash
+curl -X POST http://localhost:3000/api/budgets \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <jwt>" \
+  -d '{"category":"Food","amount":300,"period":"monthly"}'
+```
+
+**7. Get analytics (auth required):**
+```bash
+curl http://localhost:3000/api/users/analytics \
+  -H "Authorization: Bearer <jwt>"
 ```
 
 ---
