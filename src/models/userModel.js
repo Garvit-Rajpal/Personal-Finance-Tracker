@@ -1,7 +1,46 @@
-const users = require('../data/users.json');
+const mongoose = require('mongoose');
 
-const findAll = () => {
-    return Promise.resolve(users);
+const userSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: [true, 'Name is required'],
+        trim: true
+    },
+    email: {
+        type: String,
+        required: [true, 'Email is required'],
+        unique: true,
+        lowercase: true,
+        trim: true
+    },
+    password: {
+        type: String,
+        required: [true, 'Password is required']
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+// Static methods to maintain compatibility with existing service layer
+userSchema.statics.findAll = function() {
+    return this.find();
 };
 
-module.exports = { findAll };
+userSchema.statics.findById = function(id) {
+    return this.findOne({ _id: id });
+};
+
+userSchema.statics.findByEmail = function(email) {
+    return this.findOne({ email });
+};
+
+userSchema.statics.create = function(userData) {
+    const user = new this(userData);
+    return user.save();
+};
+
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;
