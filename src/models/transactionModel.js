@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const transactionSchema = new mongoose.Schema({
+    userId:{
+        type: mongoose.Schema.Types.ObjectId,
+        required: [true, 'User ID is required'],
+        ref: 'User',
+        index: true
+    },
     type: {
         type: String,
         required: [true, 'Type is required'],
@@ -30,12 +36,13 @@ const transactionSchema = new mongoose.Schema({
 });
 
 
-transactionSchema.statics.findAll = function() {
-    return this.find();
+transactionSchema.statics.findAll = function(userId) {
+
+    return this.find({ userId });
 };
 
-transactionSchema.statics.findById = function(id) {
-    return this.findOne({ _id: id });
+transactionSchema.statics.findByIdForUser = function(id, userId) {
+    return this.findOne({ _id: id, userId });
 };
 
 transactionSchema.statics.create = function(transactionData) {
@@ -43,22 +50,20 @@ transactionSchema.statics.create = function(transactionData) {
     return transaction.save();
 };
 
-transactionSchema.statics.updateById = function(id, updates) {
+transactionSchema.statics.updateByIdForUser = function(id,userId, updates) {
     return this.findOneAndUpdate(
-        { _id: id },
+        { _id: id ,userId},
         { ...updates, updatedAt: Date.now() },
         { new: true }
     );
 };
 
-transactionSchema.statics.deleteById = function(id) {
-    return this.findOneAndDelete({ _id: id });
+transactionSchema.statics.deleteByIdForUser = function(id,userId) {
+    return this.findOneAndDelete({ _id: id ,userId});
 };
 
 // For summary calculation
-transactionSchema.statics.readTransactions = function() {
-    return this.find();
-};
+
 
 const Transaction = mongoose.model('Transaction', transactionSchema);
 

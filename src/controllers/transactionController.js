@@ -2,7 +2,7 @@ const transactionService = require('../services/transactionService');
 
 exports.getAllTransactions = async (req, res, next) => {
   try {
-    const transactions = await transactionService.getAllTransactions();
+    const transactions = await transactionService.getAllTransactions(req.user.id);
     res.status(200).json({
       success: true,
       data: transactions
@@ -15,7 +15,7 @@ exports.getAllTransactions = async (req, res, next) => {
 exports.getTransactionById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const transaction = await transactionService.getTransactionById(id);
+    const transaction = await transactionService.getTransactionById(id, req.user.id);
     res.status(200).json({
       success: true,
       data: transaction
@@ -27,7 +27,7 @@ exports.getTransactionById = async (req, res, next) => {
 
 exports.createTransaction = async (req, res, next) => {
   try {
-    const transaction = await transactionService.createTransaction(req.body);
+    const transaction = await transactionService.createTransaction(req);
     res.status(201).json({
       success: true,
       message: 'Transaction created successfully',
@@ -41,7 +41,7 @@ exports.createTransaction = async (req, res, next) => {
 exports.updateTransaction = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const transaction = await transactionService.updateTransaction(id, req.body);
+    const transaction = await transactionService.updateTransaction(id,req.user.id, req.body);
     res.status(200).json({
       success: true,
       message: 'Transaction updated successfully',
@@ -55,7 +55,7 @@ exports.updateTransaction = async (req, res, next) => {
 exports.deleteTransaction = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await transactionService.deleteTransaction(id);
+    await transactionService.deleteTransaction(id,req.user.id);
     res.status(200).json({
       success: true,
       message: 'Transaction deleted successfully'
@@ -67,7 +67,7 @@ exports.deleteTransaction = async (req, res, next) => {
 
 exports.getSummary = async (req, res, next) => {
   try {
-    const summary = await transactionService.getSummary();
+    const summary = await transactionService.getSummary(req.user.id);
     res.status(200).json({
       success: true,
       data: summary

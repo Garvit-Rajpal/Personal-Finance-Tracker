@@ -1,40 +1,39 @@
 const transactionModel = require('../models/transactionModel');
 const { NotFoundError } = require('../utils/errorClasses');
 
-const getAllTransactions = async () => {
-    return await transactionModel.findAll();
-};
-
-const getTransactionById = async (id) => {
-    const transaction = await transactionModel.findById(id);
-    if (!transaction) {
-        throw new NotFoundError(`Transaction with id ${id} not found`);
-    }
-    return transaction;
+const getAllTransactions = async (userId) => {
+    return await transactionModel.findAll(userId);
 };
 
 const createTransaction = async (transactionData) => {
-    return await transactionModel.create(transactionData);
+    const transaction = {
+        ...transactionData.body,
+        userId: transactionData.user.id
+    }
+    return await transactionModel.create(transaction);
 };
 
-const updateTransaction = async (id, updates) => {
-    const transaction = await transactionModel.updateById(id, updates);
-    if (!transaction) {
-        throw new NotFoundError(`Transaction with id ${id} not found`);
-    }
+const getTransactionById = async (id, userId) => {
+    const transaction = await transactionModel.findByIdForUser(id, userId);
+    if (!transaction) throw new NotFoundError(`Transaction with id ${id} not found`);
     return transaction;
 };
 
-const deleteTransaction = async (id) => {
-    const transaction = await transactionModel.deleteById(id);
-    if (!transaction) {
-        throw new NotFoundError(`Transaction with id ${id} not found`);
-    }
+const updateTransaction = async (id, userId, updates) => {
+    const transaction = await transactionModel.updateByIdForUser(id, userId, updates);
+    if (!transaction) throw new NotFoundError(`Transaction with id ${id} not found`);
     return transaction;
 };
 
-const getSummary = async () => {
-    const transactions = await transactionModel.readTransactions();
+const deleteTransaction = async (id, userId) => {
+    const transaction = await transactionModel.deleteByIdForUser(id, userId);
+    if (!transaction) throw new NotFoundError(`Transaction with id ${id} not found`);
+    return transaction;
+};
+
+const getSummary = async (userId) => {
+    
+    const transactions = await transactionModel.findAll(userId);
     
     const summary = {
         totalIncome: 0,

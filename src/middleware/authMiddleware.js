@@ -1,27 +1,38 @@
-const { AppError } = require('../utils/errorClasses');
+const { ValidationError } = require('../utils/errorClasses');
+const jwt = require('jsonwebtoken');
 
-const protect = (req, res, next) => {
-    let token;
-
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        token = req.headers.authorization.split(' ')[1];
+const authMiddleware = async (req, res, next) => {
+    const authHeader = req.get('authorization') || req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: "Authorization header missing" });
     }
 
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : authHeader.trim();
     if (!token) {
-        return next(new AppError('Not authorized to access this route', 401));
+        return res.status(401).send({ message: "Token not found" });
     }
 
     try {
-
-        if (!token.startsWith('mock-jwt-token-')) {
-            throw new Error('Invalid token');
+        // jwt.verify is synchronous when no callback is provided
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        return next();
+    } 
+    catch (err) {
+        console.log("Error in auth middleware", err);
+        // More descriptive responses for common JWT errors
+        if (err instanceof jwt.TokenExpiredError) {
+            return res.status(401).send({ message: "Token expired" });
         }
-
-
-        next();
-    } catch (error) {
-        return next(new AppError('Not authorized to access this route', 401));
-    }
+        if (err instanceof jwt.JsonWebTokenError) {
+            return res.status(401).send({ message: "Invalid token" });
+        }
+        if (err instanceof jwt.NotBeforeError) {
+            return res.status(401).send({ message: "Token not active yet" });
+        }
+        // fallback
+         throw new ValidationError("Authentication failed");
+}
 };
 
-module.exports = { protect };
+module.exports = { authMiddleware };
